@@ -10,7 +10,8 @@ const { dbConnectionPool, dbConnectionPromise } = require('./db/dbconfig');
 app.use(express.json());
 app.use(cors());
 
-// Test route
+// user route file
+const userRouter = require('./routes/userRoute');
 
 
 // Start the server
