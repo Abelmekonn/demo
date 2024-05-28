@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
+const { dbConnectionPromise } = require('../db/dbconfig');
 
-async function registerUser(req, res, dbConnectionPromise) {
+async function registerUser(req, res) {
     try {
         const { first_name, last_name, email, password } = req.body;
 
@@ -10,35 +11,23 @@ async function registerUser(req, res, dbConnectionPromise) {
         }
 
         // Hash the password
-        bcrypt.hash(password, 10, async (err, hashedPassword) => {
-            if (err) {
-                console.error('Error hashing password:', err);
-                return res.status(500).json({ message: 'Internal Server Error' });
-            }
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-            console.log("Received request:", { first_name, last_name, email });
+        console.log("Received request:", { first_name, last_name, email });
 
-            try {
-                // Example database query to insert the user data
-                const connection = await dbConnectionPromise.getConnection();
-                const sql = 'INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)';
-                const [result] = await connection.execute(sql, [first_name, last_name, email, hashedPassword]);
+        // Example database query to insert the user data
+        const connection = await dbConnectionPromise;
+        const sql = 'INSERT INTO employee_test (first_name, last_name, email, password) VALUES (?, ?, ?, ?)';
+        const [result] = await connection.execute(sql, [first_name, last_name, email, hashedPassword]);
 
-                connection.release();
-
-                res.status(201).json({ message: 'User registered successfully', result });
-            } catch (error) {
-                console.error('Error registering user:', error);
-                res.status(500).json({ message: 'Internal Server Error' });
-            }
-        });
+        res.status(201).json({ message: 'User registered successfully', result });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
 
-async function loginUser(req, res, dbConnectionPromise) {
+async function loginUser(req, res) {
     try {
         const { email, password } = req.body;
 
@@ -48,37 +37,23 @@ async function loginUser(req, res, dbConnectionPromise) {
         }
 
         // Fetch the user from the database
-        dbConnectionPromise.getConnection((err, connection) => {
-            if (err) {
-                console.error('Error getting database connection:', err);
-                return res.status(500).json({ message: 'Internal Server Error' });
-            }
+        const connection = await dbConnectionPromise;
+        const [rows] = await connection.execute('SELECT * FROM employee_test WHERE email = ?', [email]);
 
-            const sql = 'SELECT * FROM users WHERE email = ?';
-            connection.execute(sql, [email], async (err, rows) => {
-                connection.release();
+        if (rows.length === 0) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
 
-                if (err) {
-                    console.error('Error executing SQL query:', err);
-                    return res.status(500).json({ message: 'Internal Server Error' });
-                }
+        const user = rows[0];
 
-                if (rows.length === 0) {
-                    return res.status(400).json({ message: 'Invalid email or password' });
-                }
+        // Compare the password with the hashed password in the database
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
-                const user = rows[0];
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
 
-                // Compare the password with the hashed password in the database
-                const isPasswordValid = await bcrypt.compare(password, user.password);
-
-                if (!isPasswordValid) {
-                    return res.status(400).json({ message: 'Invalid email or password' });
-                }
-
-                res.status(200).json({ message: 'Login successful', user });
-            });
-        });
+        res.status(200).json({ message: 'Login successful', user });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal Server Error' });

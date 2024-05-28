@@ -13,6 +13,7 @@ app.use(cors());
 // user route file
 const userRouter = require('./routes/userRoute');
 
+app.use("/api", userRouter);
 
 // Start the server
 async function startServer() {
