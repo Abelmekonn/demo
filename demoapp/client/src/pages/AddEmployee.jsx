@@ -1,10 +1,13 @@
 import React from 'react'
 
-function AddEmployee() {
+function AddEmployee(props) {
+    function handelSubmit(){
+        
+    }
     return (
         <div>
             <h1>Add employee</h1>
-            <form>
+            <form >
                 <label htmlFor="fname">First name:</label><br />
                 <input type="text" id="fname" name="fname" /><br />
                 <label htmlFor="lname">Last name:</label><br />
