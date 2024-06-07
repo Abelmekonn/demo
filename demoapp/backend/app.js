@@ -2,7 +2,7 @@ require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
 const app = express();
-const port = 5555;
+const port = process.env.PORT || 5555;
 
 const { dbConnectionPool, dbConnectionPromise } = require('./db/dbconfig');
 
@@ -10,9 +10,8 @@ const { dbConnectionPool, dbConnectionPromise } = require('./db/dbconfig');
 app.use(express.json());
 app.use(cors());
 
-// user route file
+// User route file
 const userRouter = require('./routes/userRoute');
-
 app.use("/api", userRouter);
 
 // Start the server

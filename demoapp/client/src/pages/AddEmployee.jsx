@@ -8,25 +8,46 @@ function AddEmployee(props) {
     const [password, setPassword] = useState('');
 
     // Handle form submission
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault();
         
         // Collect form data
         const employeeData = {
-            first_name :firstname,
-            last_name:lastname,
-            email:email,
-            password:password,
+            first_name: firstname,
+            last_name: lastname,
+            email: email,
+            password: password,
         };
         
-        // Process form data (e.g., send to API, update parent state, etc.)
-        const apiurl="http://localhost:5500/add-employee"
+        const apiurl = "http://localhost:5555/api/register";
 
-        // Reset form fields (optional)
-        setFirstname('');
-        setLastname('');
-        setEmail('');
-        setPassword('');
+        try {
+            // Send data to API
+            const response = await fetch(apiurl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(employeeData),
+            });
+
+            if (response.ok) {
+                // Handle successful response
+                console.log('Employee added successfully');
+                // Reset form fields
+                setFirstname('');
+                setLastname('');
+                setEmail('');
+                setPassword('');
+            } else {
+                // Handle error response
+                const errorData = await response.json();
+                console.error('Error adding employee:', errorData);
+            }
+        } catch (error) {
+            // Handle network errors
+            console.error('Network error:', error);
+        }
     }
 
     return (
